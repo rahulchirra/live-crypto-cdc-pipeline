@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def merge_to_snowflake():
-    # 1. Snowflake database ki login avvadam
+    # 1. Snowflake database login 
     conn = snowflake.connector.connect(
         user=os.getenv('SNOWFLAKE_USER'),
         password=os.getenv('SNOWFLAKE_PASSWORD'),
@@ -16,13 +16,13 @@ def merge_to_snowflake():
     )
     cursor = conn.cursor()
 
-    # 2. Temporary Table create cheyadam
+    # 2. Temporary Table create 
     cursor.execute("""
         CREATE OR REPLACE TEMPORARY TABLE temp_crypto_data 
         LIKE crypto_market_data;
     """)
 
-    # 3. S3 Stage nunchi Parquet file ni Temp Table loki COPY cheyadam
+    # 3. S3 Stage to  Parquet file  Temp Table  COPY 
     cursor.execute("""
         COPY INTO temp_crypto_data
         FROM @cdc_s3_stage/cdc_data/crypto_market.parquet
@@ -30,7 +30,7 @@ def merge_to_snowflake():
         MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;
     """)
 
-    # 4. Temp Table nunchi Main Table loki MERGE (Upsert) cheyadam
+    # 4. Temp Table  Main Table  MERGE (Upsert) 
     cursor.execute("""
         MERGE INTO crypto_market_data AS target
         USING temp_crypto_data AS source
@@ -49,7 +49,7 @@ def merge_to_snowflake():
 
     print("Success: Data merged into Snowflake table!")
 
-    # 5. Changes save chesi connection close cheyadam
+    # 5. Changes save  connection close 
     conn.commit()
     cursor.close()
     conn.close()
